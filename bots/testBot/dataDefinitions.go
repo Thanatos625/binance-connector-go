@@ -9,4 +9,5 @@ type BotConfig struct {
 	Symbol           string  `xml:"Symbol"`
 	TradeAmount      float64 `xml:"TradeAmount"`
 	ProfitPriceDelta float64 `xml:"ProfitPriceDelta"`
+	FilePath         string  `xml:"FilePath"`
 }

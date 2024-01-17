@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"strconv"
 
@@ -15,17 +14,19 @@ func GetWalletAmount(symbol string) (float64, error) {
 		Do(context.Background())
 
 	if err != nil {
-		fmt.Println(err)
+		ErrorLogger.Println(err.Error())
 		return -1, err
 	}
-	fmt.Println(binance_connector.PrettyPrint(asset))
+
+	//fmt.Println(binance_connector.PrettyPrint(asset))
 
 	retVal, err := strconv.ParseFloat(asset[len(asset)-1].Free, 64)
 	if err != nil {
-		fmt.Println("Error:", err)
+		ErrorLogger.Println(err.Error())
 		return retVal, err
 	}
 
+	InfoLogger.Println("Wallet Amount:", retVal)
 	return retVal, nil
 }
 func LastPrice(symbol string) (float64, error) {
@@ -36,17 +37,17 @@ func LastPrice(symbol string) (float64, error) {
 	lastPrice, err := client.NewTickerService().
 		Symbol(symbol).Do(context.Background())
 	if err != nil {
-		fmt.Println(err)
+		ErrorLogger.Println(err.Error())
 		return 0, err
 	}
-	fmt.Println(binance_connector.PrettyPrint(lastPrice))
 
 	fLastPrice, err := strconv.ParseFloat(lastPrice.LastPrice, 64)
 	if err != nil {
-		fmt.Println("Error:", err)
+		ErrorLogger.Println(err.Error())
 		return 0, err
 	}
 
+	InfoLogger.Println("LastPrice:", fLastPrice)
 	return fLastPrice, nil
 }
 
@@ -55,55 +56,56 @@ func round(f float64, precision int) float64 {
 	shift := math.Pow(10, float64(precision))
 	return math.Round(f*shift) / shift
 }
-func GetCurrentOpenOrders() {
 
-	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
+// func GetCurrentOpenOrders() {
 
-	// Binance Get current open orders - GET /api/v3/openOrders
-	getCurrentOpenOrders, err := client.NewGetOpenOrdersService().Symbol("BTCUSDT").
-		Do(context.Background())
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(binance_connector.PrettyPrint(getCurrentOpenOrders))
-}
-func NewBuyOrder() {
+// 	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
 
-	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
-	// Create new order
-	newOrder, err := client.NewCreateOrderService().Symbol("BTCUSDT").
-		Side("BUY").Type("MARKET").Quantity(0.00012).
-		Do(context.Background())
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(binance_connector.PrettyPrint(newOrder))
-}
-func NewSellOrder() {
+// 	// Binance Get current open orders - GET /api/v3/openOrders
+// 	getCurrentOpenOrders, err := client.NewGetOpenOrdersService().Symbol("BTCUSDT").
+// 		Do(context.Background())
+// 	if err != nil {
+// 		ErrorLogger.Println(err.Error())
+// 		return
+// 	}
+// 	fmt.Println(binance_connector.PrettyPrint(getCurrentOpenOrders))
+// }
+// func NewBuyOrder() {
 
-	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
-	// Create new order
-	newOrder, err := client.NewCreateOrderService().Symbol("BTCUSDT").
-		Side("SELL").Type("MARKET").Quantity(0.00012).
-		Do(context.Background())
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(binance_connector.PrettyPrint(newOrder))
-}
-func CancelOrder() {
+// 	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
+// 	// Create new order
+// 	newOrder, err := client.NewCreateOrderService().Symbol("BTCUSDT").
+// 		Side("BUY").Type("MARKET").Quantity(0.00012).
+// 		Do(context.Background())
+// 	if err != nil {
+// 		ErrorLogger.Println(err.Error())
+// 		return
+// 	}
+// 	fmt.Println(binance_connector.PrettyPrint(newOrder))
+// }
+// func NewSellOrder() {
 
-	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
+// 	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
+// 	// Create new order
+// 	newOrder, err := client.NewCreateOrderService().Symbol("BTCUSDT").
+// 		Side("SELL").Type("MARKET").Quantity(0.00012).
+// 		Do(context.Background())
+// 	if err != nil {
+// 		ErrorLogger.Println(err.Error())
+// 		return
+// 	}
+// 	fmt.Println(binance_connector.PrettyPrint(newOrder))
+// }
+// func CancelOrder() {
 
-	// Binance Cancel Order endpoint - DELETE /api/v3/order
-	cancelOrder, err := client.NewCancelOrderService().Symbol("BTCUSDT").OrderId(24304541478).
-		Do(context.Background())
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(binance_connector.PrettyPrint(cancelOrder))
-}
+// 	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
+
+// 	// Binance Cancel Order endpoint - DELETE /api/v3/order
+// 	cancelOrder, err := client.NewCancelOrderService().Symbol("BTCUSDT").OrderId(24304541478).
+// 		Do(context.Background())
+// 	if err != nil {
+// 		ErrorLogger.Println(err.Error())
+// 		return
+// 	}
+// 	fmt.Println(binance_connector.PrettyPrint(cancelOrder))
+// }

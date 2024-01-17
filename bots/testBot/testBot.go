@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"encoding/xml"
-	"fmt"
+	"log"
 	"math"
 	"os"
 	"time"
@@ -14,36 +14,61 @@ import (
 var apiKey = ""
 var secretKey = ""
 var baseURL = ""
+var lastSaveTime time.Time
+var botConfig BotConfig
+
+var (
+	WarningLogger *log.Logger
+	InfoLogger    *log.Logger
+	ErrorLogger   *log.Logger
+)
 
 func main() {
 	if len(os.Args) > 1 && os.Args[2] != "" {
-		botConfig := readConfig(os.Args[2])
+		initLogger()
+		botConfig = readConfig(os.Args[2])
 		apiKey = botConfig.ApiKey
 		secretKey = botConfig.SecretKey
 		baseURL = botConfig.BaseURL
 
-		StartBot(botConfig.PairSymbol, botConfig.Symbol, botConfig.TradeAmount, botConfig.ProfitPriceDelta)
+		StartBot()
+
 	} else {
-		fmt.Println("Missing config argument")
+		ErrorLogger.Println("Missing config argument")
 	}
 }
 
-func StartBot(pairSymbol, symbol string, tradeAmount, profitPriceDelta float64) {
+func StartBot() {
 
 	var lastPrice float64 = 0
 
 	for {
-		walletAmmount, _ := GetWalletAmount("USDT")
+		walletAmmount, err := GetWalletAmount("USDT")
 
+		if err != nil {
+			ErrorLogger.Println(err.Error())
+			return
+		}
 		if walletAmmount > 0 {
-			cPrice, _ := LastPrice(pairSymbol)
-			if (math.Abs(lastPrice-cPrice) >= math.Abs(lastPrice*profitPriceDelta)) || (lastPrice == 0) {
-				if cPrice*tradeAmount < walletAmmount {
-					NewOrderPair(pairSymbol, tradeAmount, profitPriceDelta)
+			cPrice, err := LastPrice(botConfig.PairSymbol)
+			if err != nil {
+				ErrorLogger.Println(err.Error())
+				return
+			}
+			if (math.Abs(lastPrice-cPrice) >= math.Abs(lastPrice*botConfig.ProfitPriceDelta-lastPrice)) || (lastPrice == 0) {
+				if cPrice*botConfig.TradeAmount < walletAmmount {
+					NewOrderPair(botConfig.PairSymbol, botConfig.TradeAmount, botConfig.ProfitPriceDelta)
 					lastPrice = cPrice
 				}
 			}
 		}
+		fileInfo, _ := os.Stat(botConfig.FilePath)
+		cSavedTime := fileInfo.ModTime()
+		if cSavedTime != lastSaveTime {
+			botConfig = readConfig(os.Args[2])
+			lastSaveTime = cSavedTime
+		}
+
 		time.Sleep(15 * time.Second)
 	}
 }
@@ -56,42 +81,58 @@ func NewOrderPair(pairSymbol string, quantity, priceDelta float64) {
 		Side("BUY").Type("MARKET").Quantity(quantity).
 		Do(context.Background())
 	if err != nil {
-		fmt.Println(err)
+		ErrorLogger.Println(err.Error())
 		return
 	}
-	fmt.Println(binance_connector.PrettyPrint(newOrder))
+	InfoLogger.Println("New Buy Order:", newOrder)
+	//fmt.Println(binance_connector.PrettyPrint(newOrder))
 	cLastPrice, err := LastPrice(pairSymbol)
 	if err != nil {
-		fmt.Println(err)
+		ErrorLogger.Println(err.Error())
 		return
 	}
 
-	sellPrice := round(cLastPrice*(1+priceDelta), 2)
+	sellPrice := round(cLastPrice*priceDelta, 2)
 
 	newSellOrder, err := client.NewCreateOrderService().Symbol(pairSymbol).
 		Side("SELL").Type("LIMIT").Quantity(quantity).Price(sellPrice).TimeInForce("GTC").
 		Do(context.Background())
 
 	if err != nil {
-		fmt.Println(err)
+		ErrorLogger.Println(err.Error())
 		return
 	}
-	fmt.Println(binance_connector.PrettyPrint(newSellOrder))
+	//fmt.Println(binance_connector.PrettyPrint(newSellOrder))
+	InfoLogger.Println("New Sell Order:", newSellOrder)
 }
 
 func readConfig(filepath string) BotConfig {
 	var config BotConfig
 	file, err := os.Open(filepath)
 	if err != nil {
-		fmt.Printf("Error opening XML file: %v\n", err)
+		ErrorLogger.Println(err.Error())
 		return config
 	}
 	defer file.Close()
 
 	decoder := xml.NewDecoder(file)
 	if err := decoder.Decode(&config); err != nil {
-		fmt.Printf("Error decoding XML: %v\n", err)
+		ErrorLogger.Println(err.Error())
 		return config
 	}
+	fileInfo, _ := os.Stat(filepath)
+	lastSaveTime = fileInfo.ModTime()
+	config.FilePath = filepath
+
 	return config
+}
+func initLogger() {
+	file, err := os.OpenFile("logs.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	InfoLogger = log.New(file, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+	WarningLogger = log.New(file, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
+	ErrorLogger = log.New(file, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 }
