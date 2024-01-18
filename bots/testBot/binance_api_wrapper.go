@@ -57,19 +57,21 @@ func round(f float64, precision int) float64 {
 	return math.Round(f*shift) / shift
 }
 
-// func GetCurrentOpenOrders() {
+func GetCurrentOpenOrders() {
 
-// 	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
+	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
 
-// 	// Binance Get current open orders - GET /api/v3/openOrders
-// 	getCurrentOpenOrders, err := client.NewGetOpenOrdersService().Symbol("BTCUSDT").
-// 		Do(context.Background())
-// 	if err != nil {
-// 		ErrorLogger.Println(err.Error())
-// 		return
-// 	}
-// 	fmt.Println(binance_connector.PrettyPrint(getCurrentOpenOrders))
-// }
+	// Binance Get current open orders - GET /api/v3/openOrders
+	getCurrentOpenOrders, err := client.NewGetOpenOrdersService().Symbol("BTCUSDT").
+		Do(context.Background())
+	if err != nil {
+		ErrorLogger.Println(err.Error())
+		return
+	}
+	//fmt.Println(binance_connector.PrettyPrint(getCurrentOpenOrders))
+	InfoLogger.Println("Orders", getCurrentOpenOrders)
+}
+
 // func NewBuyOrder() {
 
 // 	client := binance_connector.NewClient(apiKey, secretKey, baseURL)

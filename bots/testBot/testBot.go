@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"encoding/xml"
 	"log"
 	"math"
@@ -31,6 +32,7 @@ func main() {
 		secretKey = botConfig.SecretKey
 		baseURL = botConfig.BaseURL
 
+		//GetCurrentOpenOrders()
 		StartBot()
 
 	} else {
@@ -57,8 +59,9 @@ func StartBot() {
 			}
 			if (math.Abs(lastPrice-cPrice) >= math.Abs(lastPrice*botConfig.ProfitPriceDelta-lastPrice)) || (lastPrice == 0) {
 				if cPrice*botConfig.TradeAmount < walletAmmount {
-					NewOrderPair(botConfig.PairSymbol, botConfig.TradeAmount, botConfig.ProfitPriceDelta)
-					lastPrice = cPrice
+					if NewOrderPair(botConfig.PairSymbol, botConfig.TradeAmount, botConfig.ProfitPriceDelta) {
+						lastPrice = cPrice
+					}
 				}
 			}
 		}
@@ -73,23 +76,25 @@ func StartBot() {
 	}
 }
 
-func NewOrderPair(pairSymbol string, quantity, priceDelta float64) {
+func NewOrderPair(pairSymbol string, quantity, priceDelta float64) bool {
 
 	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
 	// Create new order
+
 	newOrder, err := client.NewCreateOrderService().Symbol(pairSymbol).
 		Side("BUY").Type("MARKET").Quantity(quantity).
 		Do(context.Background())
 	if err != nil {
 		ErrorLogger.Println(err.Error())
-		return
+		return false
 	}
-	InfoLogger.Println("New Buy Order:", newOrder)
+	s, _ := json.Marshal(newOrder)
+	InfoLogger.Println("New Buy Order:", string(s))
 	//fmt.Println(binance_connector.PrettyPrint(newOrder))
 	cLastPrice, err := LastPrice(pairSymbol)
 	if err != nil {
 		ErrorLogger.Println(err.Error())
-		return
+		return false
 	}
 
 	sellPrice := round(cLastPrice*priceDelta, 2)
@@ -100,10 +105,12 @@ func NewOrderPair(pairSymbol string, quantity, priceDelta float64) {
 
 	if err != nil {
 		ErrorLogger.Println(err.Error())
-		return
+		return false
 	}
-	//fmt.Println(binance_connector.PrettyPrint(newSellOrder))
-	InfoLogger.Println("New Sell Order:", newSellOrder)
+	// fmt.Println(binance_connector.PrettyPrint(newSellOrder))
+	s, _ = json.Marshal(newSellOrder)
+	InfoLogger.Println("New Sell Order:", string(s))
+	return true
 }
 
 func readConfig(filepath string) BotConfig {
@@ -124,6 +131,7 @@ func readConfig(filepath string) BotConfig {
 	lastSaveTime = fileInfo.ModTime()
 	config.FilePath = filepath
 
+	InfoLogger.Println("Reload Configuration")
 	return config
 }
 func initLogger() {
