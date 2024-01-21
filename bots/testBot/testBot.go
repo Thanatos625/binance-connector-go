@@ -43,6 +43,7 @@ func main() {
 func StartBot() {
 
 	var lastPrice float64 = 0
+	var lastWalletAmmout float64 = 0
 
 	for {
 		walletAmmount, err := GetWalletAmount("USDT")
@@ -56,6 +57,10 @@ func StartBot() {
 			if err != nil {
 				ErrorLogger.Println(err.Error())
 				return
+			}
+			if walletAmmount != lastWalletAmmout {
+				InfoLogger.Println("Wallet Amount:", walletAmmount)
+				lastWalletAmmout = walletAmmount
 			}
 			if (math.Abs(lastPrice-cPrice) >= math.Abs(lastPrice*botConfig.ProfitPriceDelta-lastPrice)) || (lastPrice == 0) {
 				if cPrice*botConfig.TradeAmount < walletAmmount {

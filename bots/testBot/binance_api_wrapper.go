@@ -26,7 +26,7 @@ func GetWalletAmount(symbol string) (float64, error) {
 		return retVal, err
 	}
 
-	InfoLogger.Println("Wallet Amount:", retVal)
+	//InfoLogger.Println("Wallet Amount:", retVal)
 	return retVal, nil
 }
 func LastPrice(symbol string) (float64, error) {
