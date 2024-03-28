@@ -29,6 +29,7 @@ func GetWalletAmount(symbol string) (float64, error) {
 	//InfoLogger.Println("Wallet Amount:", retVal)
 	return retVal, nil
 }
+
 func LastPrice(symbol string) (float64, error) {
 
 	client := binance_connector.NewClient("", "", baseURL)
@@ -71,43 +72,3 @@ func GetCurrentOpenOrders() {
 	//fmt.Println(binance_connector.PrettyPrint(getCurrentOpenOrders))
 	InfoLogger.Println("Orders", getCurrentOpenOrders)
 }
-
-// func NewBuyOrder() {
-
-// 	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
-// 	// Create new order
-// 	newOrder, err := client.NewCreateOrderService().Symbol("BTCUSDT").
-// 		Side("BUY").Type("MARKET").Quantity(0.00012).
-// 		Do(context.Background())
-// 	if err != nil {
-// 		ErrorLogger.Println(err.Error())
-// 		return
-// 	}
-// 	fmt.Println(binance_connector.PrettyPrint(newOrder))
-// }
-// func NewSellOrder() {
-
-// 	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
-// 	// Create new order
-// 	newOrder, err := client.NewCreateOrderService().Symbol("BTCUSDT").
-// 		Side("SELL").Type("MARKET").Quantity(0.00012).
-// 		Do(context.Background())
-// 	if err != nil {
-// 		ErrorLogger.Println(err.Error())
-// 		return
-// 	}
-// 	fmt.Println(binance_connector.PrettyPrint(newOrder))
-// }
-// func CancelOrder() {
-
-// 	client := binance_connector.NewClient(apiKey, secretKey, baseURL)
-
-// 	// Binance Cancel Order endpoint - DELETE /api/v3/order
-// 	cancelOrder, err := client.NewCancelOrderService().Symbol("BTCUSDT").OrderId(24304541478).
-// 		Do(context.Background())
-// 	if err != nil {
-// 		ErrorLogger.Println(err.Error())
-// 		return
-// 	}
-// 	fmt.Println(binance_connector.PrettyPrint(cancelOrder))
-// }

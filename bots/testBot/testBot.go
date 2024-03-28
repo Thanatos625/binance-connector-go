@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"log"
-	"math"
 	"os"
 	"time"
 
@@ -42,10 +41,11 @@ func main() {
 
 func StartBot() {
 
-	var lastPrice float64 = 0
+	//var lastPrice float64 = 0
 	var lastWalletAmmout float64 = 0
 
 	for {
+		var quantity = botConfig.TradeAmount
 		walletAmmount, err := GetWalletAmount("USDT")
 
 		if err != nil {
@@ -62,13 +62,31 @@ func StartBot() {
 				InfoLogger.Println("Wallet Amount:", walletAmmount)
 				lastWalletAmmout = walletAmmount
 			}
-			if (math.Abs(lastPrice-cPrice) >= math.Abs(lastPrice*botConfig.ProfitPriceDelta-lastPrice)) || (lastPrice == 0) {
+
+			if quantity < 0 {
+				constInc := 0.00001
+				for inc := 0.0; cPrice*inc <= walletAmmount; inc = inc + constInc {
+					quantity = round(inc, 6)
+				}
+				quantity -= constInc
+				quantity = round(quantity, 6)
+			} else {
 				if cPrice*botConfig.TradeAmount < walletAmmount {
-					if NewOrderPair(botConfig.PairSymbol, botConfig.TradeAmount, botConfig.ProfitPriceDelta) {
-						lastPrice = cPrice
-					}
+					quantity = botConfig.TradeAmount
+				} else {
+					quantity = -1
 				}
 			}
+			if cPrice*quantity < walletAmmount && quantity > 0.00001 {
+				NewOrderPair(botConfig.PairSymbol, quantity, botConfig.ProfitPriceDelta)
+			}
+			// if (math.Abs(lastPrice-cPrice) >= math.Abs(lastPrice*botConfig.ProfitPriceDelta-lastPrice)) || (lastPrice == 0) {
+			// 	if cPrice*botConfig.TradeAmount < walletAmmount {
+			// 		if NewOrderPair(botConfig.PairSymbol, botConfig.TradeAmount, botConfig.ProfitPriceDelta) {
+			// 			lastPrice = cPrice
+			// 		}
+			// 	}
+			// }
 		}
 		fileInfo, _ := os.Stat(botConfig.FilePath)
 		cSavedTime := fileInfo.ModTime()
@@ -102,10 +120,15 @@ func NewOrderPair(pairSymbol string, quantity, priceDelta float64) bool {
 		return false
 	}
 
+	walletAmmountBTC, err := GetWalletAmount("BTC")
+	if err != nil {
+		ErrorLogger.Println(err.Error())
+		return false
+	}
 	sellPrice := round(cLastPrice*priceDelta, 2)
-
+	walletAmmountBTC = round(walletAmmountBTC, 5)
 	newSellOrder, err := client.NewCreateOrderService().Symbol(pairSymbol).
-		Side("SELL").Type("LIMIT").Quantity(quantity).Price(sellPrice).TimeInForce("GTC").
+		Side("SELL").Type("LIMIT").Quantity(walletAmmountBTC).Price(sellPrice).TimeInForce("GTC").
 		Do(context.Background())
 
 	if err != nil {
