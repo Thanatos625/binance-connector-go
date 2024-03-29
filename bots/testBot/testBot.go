@@ -62,9 +62,9 @@ func StartBot() {
 				InfoLogger.Println("Wallet Amount:", walletAmmount)
 				lastWalletAmmout = walletAmmount
 			}
-
+			constInc := 0.00001
 			if quantity < 0 {
-				constInc := 0.00001
+
 				for inc := 0.0; cPrice*inc <= walletAmmount; inc = inc + constInc {
 					quantity = round(inc, 6)
 				}
@@ -77,7 +77,7 @@ func StartBot() {
 					quantity = -1
 				}
 			}
-			if cPrice*quantity < walletAmmount && quantity > 0.00001 {
+			if cPrice*quantity < walletAmmount && quantity > constInc {
 				NewOrderPair(botConfig.PairSymbol, quantity, botConfig.ProfitPriceDelta)
 			}
 			// if (math.Abs(lastPrice-cPrice) >= math.Abs(lastPrice*botConfig.ProfitPriceDelta-lastPrice)) || (lastPrice == 0) {
