@@ -52,10 +52,14 @@ func LastPrice(symbol string) (float64, error) {
 	return fLastPrice, nil
 }
 
-// round rounds a float64 to a specified number of decimal places
-func round(f float64, precision int) float64 {
+// roundWithDecimals rounds a float64 to a specified number of decimal places
+func roundWithDecimals(f float64, precision int) float64 {
 	shift := math.Pow(10, float64(precision))
 	return math.Round(f*shift) / shift
+}
+func floorWithDecimals(f float64, precision int) float64 {
+	multiplier := math.Pow(10, float64(precision))
+	return math.Floor(f*multiplier) / multiplier
 }
 
 func GetCurrentOpenOrders() {
